@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package rpc;
+
+// Defining the gRPC service
+service Cache {
+  // Creates and stores a KV pair
+  rpc Store(StoreReq) returns (StoreResp) {}
+
+  // Fetches a KV pair
+  rpc Get(GetReq) returns (GetResp) {}
+}
+
+// This request message containing a complete store request
+// Stores a key-value pair
+message StoreReq {
+  string key = 1;
+  bytes val = 2;
+}
+
+// This response message responds to a store request
+message StoreResp {
+}
+
+// This request message containing a complete get request
+// Get's a value from a key-value pair after providing the key
+message GetReq {
+  string key = 1;
+}
+
+// This response message containing a response to a get request
+// Responds to a get request with the value
+message GetResp {
+  bytes val = 1;
+}
