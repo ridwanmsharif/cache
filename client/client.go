@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"net"
+	// "net"
 	"os"
 
 	rpc "github.com/ridwanmsharif/cache/idl"
@@ -28,7 +28,7 @@ func runClient() error {
 		return fmt.Errorf("Failed to dial server: %s\n", err)
 	}
 
-	cache = rpc.NewCacheClient(conn)
+	cache := rpc.NewCacheClient(conn)
 
 	// Store
 	_, err = cache.Store(context.Background(), &rpc.StoreReq{Key: "TESTKEY", Val: []byte("TESTVALUE")})
@@ -38,7 +38,7 @@ func runClient() error {
 	}
 
 	// Get
-	resp, err = cache.Get(context.Background(), &rpc.GetReq{Key: "TESTKEY"})
+	resp, err := cache.Get(context.Background(), &rpc.GetReq{Key: "TESTKEY"})
 
 	if err != nil {
 		return fmt.Errorf("Failed to store key value pair : %s\n", err)
@@ -46,4 +46,8 @@ func runClient() error {
 
 	fmt.Printf("Got value from cache service: %s\n", resp.Val)
 	return nil
+}
+
+func main() {
+	clientMain()
 }

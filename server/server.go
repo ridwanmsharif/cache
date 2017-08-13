@@ -7,10 +7,11 @@ import (
 	"os"
 
 	// "github.com/pkg/errors"
+	"github.com/grpc/grpc-go/status"
 	rpc "github.com/ridwanmsharif/cache/idl"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	// "google.golang.org/grpc/codes"
+	"google.golang.org/grpc/codes"
 	// "google.golang.org/grpc/reflection"
 )
 
@@ -26,7 +27,10 @@ func serverMain() {
 // Run the server after establishing gRPC connections
 func runServer() error {
 	srv := grpc.NewServer()
-	rpc.RegisterCacheServer(srv, &CacheService{})
+	cs := CacheService{
+		store: make(map[string][]byte),
+	}
+	rpc.RegisterCacheServer(srv, &cs)
 	l, err := net.Listen("tcp", "localhost:5051")
 	if err != nil {
 		return err
@@ -44,8 +48,9 @@ type CacheService struct {
 func (s *CacheService) Get(ctx context.Context, req *rpc.GetReq) (*rpc.GetResp, error) {
 	val, ok := s.store[req.Key]
 	if !ok {
-		err := "Key not found :%s\n"
-		return nil, fmt.Errorf(err, req.Key)
+		// err := "Key not found :%s\n"
+		// return nil, fmt.Errorf(err, req.Key)
+		return nil, status.Errorf(codes.NotFound, "Key not found: %s\n", req.Key)
 	}
 	return &rpc.GetResp{Val: val}, nil
 }
@@ -54,4 +59,8 @@ func (s *CacheService) Get(ctx context.Context, req *rpc.GetReq) (*rpc.GetResp, 
 func (s *CacheService) Store(ctx context.Context, req *rpc.StoreReq) (*rpc.StoreResp, error) {
 	s.store[req.Key] = req.Val
 	return &rpc.StoreResp{}, nil
+}
+
+func main() {
+	serverMain()
 }
