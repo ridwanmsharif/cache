@@ -12,6 +12,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
 	// "google.golang.org/grpc/reflection"
 )
 
@@ -26,7 +27,13 @@ func serverMain() {
 
 // Run the server after establishing gRPC connections
 func runServer() error {
-	srv := grpc.NewServer()
+	tlsCreds, err := credentials.NewServerTLSFromFile("certs/server.crt", "certs/server.key")
+
+	if err != nil {
+		return err
+	}
+
+	srv := grpc.NewServer(grpc.Creds(tlsCreds))
 	cs := CacheService{
 		store: make(map[string][]byte),
 	}

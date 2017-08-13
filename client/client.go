@@ -8,6 +8,7 @@ import (
 	rpc "github.com/ridwanmsharif/cache/idl"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	// "google.golang.org/grpc/reflection"
 )
 
@@ -22,10 +23,17 @@ func clientMain() {
 
 // Run Client
 func runClient() error {
-	// Connect
-	conn, err := grpc.Dial("localhost:5051", grpc.WithInsecure())
+
+	// Create the client TLS credentials
+	tlsCreds, err := credentials.NewClientTLSFromFile("certs/server.crt", "")
 	if err != nil {
-		return fmt.Errorf("Failed to dial server: %s\n", err)
+		return fmt.Errorf("could not load tls cert: %s", err)
+	}
+
+	// Create a connection with the TLS credentials
+	conn, err := grpc.Dial("localhost:5051", grpc.WithTransportCredentials(tlsCreds))
+	if err != nil {
+		return fmt.Errorf("could not dial %s: %s", "localhost:5051", err)
 	}
 
 	cache := rpc.NewCacheClient(conn)
