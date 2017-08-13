@@ -18,7 +18,6 @@ func clientMain() {
 		fmt.Fprintf(os.Stderr, "Failed: %s\n", err)
 		os.Exit(1)
 	}
-	fmt.Println("Connected to server.")
 }
 
 // Run Client
