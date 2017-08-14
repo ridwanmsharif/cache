@@ -36,7 +36,7 @@ message GetResp {
 }
 
 // Defining a Accounts gRPC service
-service Acconuts {
+service Accounts {
   // Gets the Account info (max number of keys user is allowed)
   rpc GetByToken(GetByTokenReq) returns (GetByTokenResp) {}
 }
