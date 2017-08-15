@@ -16,15 +16,15 @@ import (
 )
 
 // Server entry point
-func serverMain() {
-	if err := runServer(); err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to run caching service: %s\n", err)
+func accountsMain() {
+	if err := runAccountServer(); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to run accounts service: %s\n", err)
 		os.Exit(1)
 	}
 }
 
 // Run the server after establishing gRPC connections
-func runServer() error {
+func runAccountServer() error {
 	tlsCreds, err := credentials.NewServerTLSFromFile("certs/server.crt", "certs/server.key")
 
 	if err != nil {
@@ -32,11 +32,16 @@ func runServer() error {
 	}
 
 	srv := grpc.NewServer(grpc.Creds(tlsCreds))
-	cs := CacheService{
-		store: make(map[string][]byte),
+	as := AccountsService{
+		accounts: make(map[string]int64),
 	}
-	rpc.RegisterCacheServer(srv, &cs)
-	l, err := net.Listen("tcp", "localhost:5051")
+
+	as.accounts["CLIENT1"] = 10
+	as.accounts["CLIENT2"] = 10
+	as.accounts["CLIENT3"] = 10
+
+	rpc.RegisterAccountsServer(srv, &as)
+	l, err := net.Listen("tcp", "localhost:5052")
 	if err != nil {
 		return err
 	}
@@ -45,27 +50,21 @@ func runServer() error {
 	return srv.Serve(l)
 }
 
-type CacheService struct {
-	store map[string][]byte
+type AccountsService struct {
+	accounts map[string]int64
 }
 
 // Get Method
-func (s *CacheService) Get(ctx context.Context, req *rpc.GetReq) (*rpc.GetResp, error) {
-	val, ok := s.store[req.Key]
+func (s *AccountsService) GetByToken(ctx context.Context, req *rpc.GetByTokenReq) (*rpc.GetByTokenResp, error) {
+	val, ok := s.accounts[req.Token]
 	if !ok {
 		// err := "Key not found :%s\n"
 		// return nil, fmt.Errorf(err, req.Key)
-		return nil, status.Errorf(codes.NotFound, "Key not found: %s\n", req.Key)
+		return nil, status.Errorf(codes.NotFound, "Key not found: %s\n", req.Token)
 	}
-	return &rpc.GetResp{Val: val}, nil
-}
-
-// Store Method
-func (s *CacheService) Store(ctx context.Context, req *rpc.StoreReq) (*rpc.StoreResp, error) {
-	s.store[req.Key] = req.Val
-	return &rpc.StoreResp{}, nil
+	return &rpc.GetByTokenResp{Allowed: val}, nil
 }
 
 func main() {
-	serverMain()
+	accountsMain()
 }

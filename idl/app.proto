@@ -48,10 +48,5 @@ message GetByTokenReq {
 
 // This response message respongs to a GetByToken request with an account
 message GetByTokenResp {
-  Account account = 1;
-}
-
-// This implements an Account object
-message Account {
-  int64 max_cache_keys = 1;
+  int64 allowed = 1;
 }
