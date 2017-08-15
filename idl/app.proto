@@ -16,7 +16,7 @@ service Cache {
 message StoreReq {
   string key = 1;
   bytes val = 2;
-  string accounts_token = 3;
+  string account_token = 3;
 }
 
 // This response message responds to a store request

@@ -32,9 +32,27 @@ func runServer() error {
 	}
 
 	srv := grpc.NewServer(grpc.Creds(tlsCreds))
-	cs := CacheService{
-		store: make(map[string][]byte),
+
+	// Create the client TLS credentials
+	tlsCreds2, err := credentials.NewClientTLSFromFile("certs/server.crt", "")
+	if err != nil {
+		return fmt.Errorf("could not load tls cert: %s", err)
 	}
+
+	// Establish a connection with Accounts server
+	conn, err := grpc.Dial("localhost:5052", grpc.WithTransportCredentials(tlsCreds2))
+	if err != nil {
+		return fmt.Errorf("could not dial %s: %s", "localhost:5052", err)
+	}
+
+	account := rpc.NewAccountsClient(conn)
+
+	cs := CacheService{
+		accounts:      account,
+		store:         make(map[string][]byte),
+		keysByAccount: make(map[string]int64),
+	}
+
 	rpc.RegisterCacheServer(srv, &cs)
 	l, err := net.Listen("tcp", "localhost:5051")
 	if err != nil {
@@ -46,7 +64,9 @@ func runServer() error {
 }
 
 type CacheService struct {
-	store map[string][]byte
+	accounts      rpc.AccountsClient
+	store         map[string][]byte
+	keysByAccount map[string]int64
 }
 
 // Get Method
@@ -62,6 +82,21 @@ func (s *CacheService) Get(ctx context.Context, req *rpc.GetReq) (*rpc.GetResp, 
 
 // Store Method
 func (s *CacheService) Store(ctx context.Context, req *rpc.StoreReq) (*rpc.StoreResp, error) {
+	resp, err := s.accounts.GetByToken(context.Background(), &rpc.GetByTokenReq{
+		Token: req.AccountToken,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if s.keysByAccount[req.AccountToken] >= resp.Allowed {
+		return nil, status.Errorf(codes.FailedPrecondition, "Account %s exceeded max key limit: %d\n", req.AccountToken, resp.Allowed)
+	}
+
+	if _, ok := s.store[req.Key]; !ok {
+		s.keysByAccount[req.AccountToken] += 1
+	}
+
 	s.store[req.Key] = req.Val
 	return &rpc.StoreResp{}, nil
 }

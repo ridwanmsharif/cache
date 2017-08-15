@@ -38,7 +38,11 @@ func runClient() error {
 	cache := rpc.NewCacheClient(conn)
 
 	// Store
-	_, err = cache.Store(context.Background(), &rpc.StoreReq{Key: "TESTKEY", Val: []byte("TESTVALUE")})
+	_, err = cache.Store(context.Background(), &rpc.StoreReq{
+		AccountToken: "CLIENT1",
+		Key:          "TESTKEY",
+		Val:          []byte("TESTVALUE"),
+	})
 
 	if err != nil {
 		return fmt.Errorf("Failed to store key value pair : %s\n", err)
