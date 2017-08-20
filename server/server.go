@@ -27,7 +27,7 @@ func serverMain() {
 
 // Run the server after establishing gRPC connections
 func runServer() error {
-	tlsCreds, err := credentials.NewServerTLSFromFile("certs/server.crt", "certs/server.key")
+	tlsCreds, err := credentials.NewServerTLSFromFile("../certs/server.crt", "../certs/server.key")
 
 	if err != nil {
 		return err
@@ -36,7 +36,7 @@ func runServer() error {
 	srv := grpc.NewServer(grpc.Creds(tlsCreds))
 
 	// Create the client TLS credentials
-	tlsCreds2, err := credentials.NewClientTLSFromFile("certs/server.crt", "")
+	tlsCreds2, err := credentials.NewClientTLSFromFile("../certs/server.crt", "")
 	if err != nil {
 		return fmt.Errorf("could not load tls cert: %s", err)
 	}
