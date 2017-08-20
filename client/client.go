@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	// "net"
+	"log"
 	"os"
+	"time"
 
 	rpc "github.com/ridwanmsharif/cache/idl"
 	"golang.org/x/net/context"
@@ -37,6 +38,9 @@ func runClient() error {
 
 	cache := rpc.NewCacheClient(conn)
 
+	// Logging
+	start := time.Now()
+
 	// Store
 	_, err = cache.Store(context.Background(), &rpc.StoreReq{
 		AccountToken: "CLIENT1",
@@ -44,12 +48,19 @@ func runClient() error {
 		Val:          []byte("TESTVALUE"),
 	})
 
+	log.Printf("Cache store duration %s\n", time.Since(start))
+
 	if err != nil {
 		return fmt.Errorf("Failed to store key value pair : %s\n", err)
 	}
 
+	// Logging
+	start = time.Now()
+
 	// Get
 	resp, err := cache.Get(context.Background(), &rpc.GetReq{Key: "TESTKEY"})
+
+	log.Printf("Cache get duration %s\n", time.Since(start))
 
 	if err != nil {
 		return fmt.Errorf("Failed to store key value pair : %s\n", err)

@@ -3,8 +3,10 @@ package main
 // Imports
 import (
 	"fmt"
+	"log"
 	"net"
 	"os"
+	"time"
 
 	"github.com/grpc/grpc-go/status"
 	rpc "github.com/ridwanmsharif/cache/idl"
@@ -82,9 +84,14 @@ func (s *CacheService) Get(ctx context.Context, req *rpc.GetReq) (*rpc.GetResp, 
 
 // Store Method
 func (s *CacheService) Store(ctx context.Context, req *rpc.StoreReq) (*rpc.StoreResp, error) {
+	// Logging
+	start := time.Now()
+
 	resp, err := s.accounts.GetByToken(context.Background(), &rpc.GetByTokenReq{
 		Token: req.AccountToken,
 	})
+	log.Printf("Accounts GetByToken duration: %s\n", time.Since(start))
+
 	if err != nil {
 		return nil, err
 	}
