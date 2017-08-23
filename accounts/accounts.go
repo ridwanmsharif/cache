@@ -25,7 +25,7 @@ func accountsMain() {
 
 // Run the server after establishing gRPC connections
 func runAccountServer() error {
-	tlsCreds, err := credentials.NewServerTLSFromFile("../certs/server.crt", "../certs/server.key")
+	tlsCreds, err := credentials.NewServerTLSFromFile("certs/server.crt", "certs/server.key")
 
 	if err != nil {
 		return err

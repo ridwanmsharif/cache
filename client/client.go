@@ -2,11 +2,10 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
-	"time"
 
 	rpc "github.com/ridwanmsharif/cache/idl"
+	"github.com/ridwanmsharif/cache/interceptor"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -31,15 +30,16 @@ func runClient() error {
 	}
 
 	// Create a connection with the TLS credentials
-	conn, err := grpc.Dial("localhost:5051", grpc.WithTransportCredentials(tlsCreds))
+	conn, err := grpc.Dial("localhost:5051",
+		grpc.WithTransportCredentials(tlsCreds),
+		interceptor.WithClientInterceptor(),
+	)
+
 	if err != nil {
 		return fmt.Errorf("could not dial %s: %s", "localhost:5051", err)
 	}
 
 	cache := rpc.NewCacheClient(conn)
-
-	// Logging
-	start := time.Now()
 
 	// Store
 	_, err = cache.Store(context.Background(), &rpc.StoreReq{
@@ -48,19 +48,12 @@ func runClient() error {
 		Val:          []byte("TESTVALUE"),
 	})
 
-	log.Printf("Cache store duration %s\n", time.Since(start))
-
 	if err != nil {
 		return fmt.Errorf("Failed to store key value pair : %s\n", err)
 	}
 
-	// Logging
-	start = time.Now()
-
 	// Get
 	resp, err := cache.Get(context.Background(), &rpc.GetReq{Key: "TESTKEY"})
-
-	log.Printf("Cache get duration %s\n", time.Since(start))
 
 	if err != nil {
 		return fmt.Errorf("Failed to store key value pair : %s\n", err)

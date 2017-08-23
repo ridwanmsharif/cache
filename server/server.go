@@ -3,13 +3,12 @@ package main
 // Imports
 import (
 	"fmt"
-	"log"
 	"net"
 	"os"
-	"time"
 
 	"github.com/grpc/grpc-go/status"
 	rpc "github.com/ridwanmsharif/cache/idl"
+	"github.com/ridwanmsharif/cache/interceptor"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -27,22 +26,25 @@ func serverMain() {
 
 // Run the server after establishing gRPC connections
 func runServer() error {
-	tlsCreds, err := credentials.NewServerTLSFromFile("../certs/server.crt", "../certs/server.key")
+	tlsCreds, err := credentials.NewServerTLSFromFile("certs/server.crt", "certs/server.key")
 
 	if err != nil {
 		return err
 	}
 
-	srv := grpc.NewServer(grpc.Creds(tlsCreds))
+	srv := grpc.NewServer(grpc.Creds(tlsCreds), interceptor.ServerInterceptor())
 
 	// Create the client TLS credentials
-	tlsCreds2, err := credentials.NewClientTLSFromFile("../certs/server.crt", "")
+	tlsCreds2, err := credentials.NewClientTLSFromFile("certs/server.crt", "")
 	if err != nil {
 		return fmt.Errorf("could not load tls cert: %s", err)
 	}
 
 	// Establish a connection with Accounts server
-	conn, err := grpc.Dial("localhost:5052", grpc.WithTransportCredentials(tlsCreds2))
+	conn, err := grpc.Dial("localhost:5052",
+		grpc.WithTransportCredentials(tlsCreds2),
+		interceptor.WithClientInterceptor(),
+	)
 	if err != nil {
 		return fmt.Errorf("could not dial %s: %s", "localhost:5052", err)
 	}
@@ -84,13 +86,10 @@ func (s *CacheService) Get(ctx context.Context, req *rpc.GetReq) (*rpc.GetResp, 
 
 // Store Method
 func (s *CacheService) Store(ctx context.Context, req *rpc.StoreReq) (*rpc.StoreResp, error) {
-	// Logging
-	start := time.Now()
 
 	resp, err := s.accounts.GetByToken(context.Background(), &rpc.GetByTokenReq{
 		Token: req.AccountToken,
 	})
-	log.Printf("Accounts GetByToken duration: %s\n", time.Since(start))
 
 	if err != nil {
 		return nil, err
