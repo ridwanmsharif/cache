@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	rpc "github.com/ridwanmsharif/cache/idl"
 	"github.com/ridwanmsharif/cache/interceptor"
@@ -42,7 +43,8 @@ func runClient() error {
 	cache := rpc.NewCacheClient(conn)
 
 	// Store
-	_, err = cache.Store(context.Background(), &rpc.StoreReq{
+	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
+	_, err = cache.Store(ctx, &rpc.StoreReq{
 		AccountToken: "CLIENT1",
 		Key:          "TESTKEY",
 		Val:          []byte("TESTVALUE"),
@@ -53,7 +55,8 @@ func runClient() error {
 	}
 
 	// Get
-	resp, err := cache.Get(context.Background(), &rpc.GetReq{Key: "TESTKEY"})
+	ctx, _ = context.WithTimeout(context.Background(), 50*time.Millisecond)
+	resp, err := cache.Get(ctx, &rpc.GetReq{Key: "TESTKEY"})
 
 	if err != nil {
 		return fmt.Errorf("Failed to store key value pair : %s\n", err)

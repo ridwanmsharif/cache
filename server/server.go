@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	// "time"
 
 	"github.com/grpc/grpc-go/status"
 	rpc "github.com/ridwanmsharif/cache/idl"
@@ -86,8 +87,10 @@ func (s *CacheService) Get(ctx context.Context, req *rpc.GetReq) (*rpc.GetResp, 
 
 // Store Method
 func (s *CacheService) Store(ctx context.Context, req *rpc.StoreReq) (*rpc.StoreResp, error) {
+	// Uncomment if you wish to set a tighter context on the accounts service from ther server side
+	// accountsCtx, _ := context.WithTimeout(context.Background(), 2*time.Second)
 
-	resp, err := s.accounts.GetByToken(context.Background(), &rpc.GetByTokenReq{
+	resp, err := s.accounts.GetByToken(ctx, &rpc.GetByTokenReq{
 		Token: req.AccountToken,
 	})
 
