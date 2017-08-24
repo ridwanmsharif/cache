@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/metadata"
 	// "google.golang.org/grpc/reflection"
 )
 
@@ -101,15 +102,32 @@ func (s *CacheService) Store(ctx context.Context, req *rpc.StoreReq) (*rpc.Store
 	if s.keysByAccount[req.AccountToken] >= resp.Allowed {
 		return nil, status.Errorf(codes.FailedPrecondition, "Account %s exceeded max key limit: %d\n", req.AccountToken, resp.Allowed)
 	}
-
-	if _, ok := s.store[req.Key]; !ok {
-		s.keysByAccount[req.AccountToken] += 1
+	if !dryRun(ctx) {
+		if _, ok := s.store[req.Key]; !ok {
+			s.keysByAccount[req.AccountToken] += 1
+		}
+		s.store[req.Key] = req.Val
 	}
-
-	s.store[req.Key] = req.Val
 	return &rpc.StoreResp{}, nil
 }
 
+// Dry Run
+func dryRun(ctx context.Context) bool {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return false
+	}
+	val, ok := md["dry-run"]
+	if !ok {
+		return false
+	}
+	if len(val) < 1 {
+		return false
+	}
+	return (val[0] == "1")
+}
+
+// Entry point
 func main() {
 	serverMain()
 }
