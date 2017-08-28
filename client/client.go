@@ -59,7 +59,7 @@ func runClient() error {
 	resp, err := cache.Get(ctx, &rpc.GetReq{Key: "TESTKEY"})
 
 	if err != nil {
-		return fmt.Errorf("Failed to store key value pair : %s\n", err)
+		return fmt.Errorf("Failed to get key value pair : %s\n", err)
 	}
 
 	fmt.Printf("Got value from cache service: %s\n", resp.Val)

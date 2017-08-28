@@ -4,8 +4,10 @@ import (
 	"log"
 	"time"
 
+	"github.com/grpc/grpc-go/status"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 )
 
 // Wrap the client interceptor in a Unary interceptor
@@ -23,9 +25,36 @@ func clientInterceptor(
 	invoker grpc.UnaryInvoker,
 	opts ...grpc.CallOption,
 ) error {
-	start := time.Now()
-	err := invoker(ctx, method, req, reply, cc, opts...)
-	log.Printf("Invoke method=%s duration=%s error=%v", method, time.Since(start), err)
+	var (
+		start    = time.Now()
+		attempts = 0
+		err      error
+		backTime time.Duration = 10
+		backoff                = time.NewTimer(time.Millisecond * backTime)
+	)
+
+	for {
+		attempts += 1
+		select {
+		case <-ctx.Done():
+			err = status.Errorf(codes.DeadlineExceeded, "timeout reached before retry attempt")
+		case <-backoff.C:
+			log.Println("Inside For loop")
+			err = invoker(ctx, method, req, reply, cc, opts...)
+			backTime *= 2
+
+			if err != nil {
+				log.Printf("Invoke method=%s duration=%s error=%v", method, time.Since(start), err)
+
+				if !backoff.Stop() {
+					<-backoff.C
+				}
+				backoff.Reset(time.Millisecond * backTime)
+				continue
+			}
+		}
+		break
+	}
 	return err
 }
 
